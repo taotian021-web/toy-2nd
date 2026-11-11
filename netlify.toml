@@ -1,0 +1,4 @@
+[build]
+  base = "project Swap"
+  command = "npm run build"
+  publish = ".next"

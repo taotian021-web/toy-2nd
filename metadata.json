@@ -1,0 +1,11 @@
+{
+  "name": "SwapNorge",
+  "description": "Nabolagets gjenbruks- og byttemarked 🇳🇴 - Del og bytt ting lokalt i ditt nabolag, tjen Swap-poeng og bygg et trygt lokalsamfunn.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

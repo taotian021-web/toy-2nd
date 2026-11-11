@@ -1,0 +1,69 @@
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // 用户档案：公开可读（用于主页展示和信誉查看），本人可写
+    match /users/{userId} {
+      allow read: if true;
+      allow write: if isOwner(userId);
+      
+      match /favorites/{favoriteId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    // 物品清单：公开可读，本人可写
+    match /items/{itemId} {
+      allow read: if true; 
+      allow create: if isSignedIn() && request.resource.data.sellerId == request.auth.uid;
+      allow update: if isSignedIn() && (
+        resource.data.sellerId == request.auth.uid || 
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['views', 'likes', 'status'])
+      );
+      allow delete: if isSignedIn() && resource.data.sellerId == request.auth.uid;
+    }
+
+    // 交换请求：仅相关方可读写
+    match /swapRequests/{requestId} {
+      allow read: if isSignedIn() && (
+        resource.data.senderId == request.auth.uid || 
+        resource.data.receiverId == request.auth.uid
+      );
+      allow create: if isSignedIn() && request.resource.data.senderId == request.auth.uid;
+      allow update, delete: if isSignedIn() && (
+        resource.data.senderId == request.auth.uid || 
+        resource.data.receiverId == request.auth.uid
+      );
+    }
+
+    // 评价：公开可读，发送方可创建
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if isSignedIn() && request.resource.data.fromId == request.auth.uid;
+    }
+
+    // 交易记录：本人参与的交易可读可创建
+    match /transactions/{txId} {
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || 
+        resource.data.targetId == request.auth.uid
+      );
+      allow create: if isSignedIn() && (
+        request.resource.data.userId == request.auth.uid || 
+        request.resource.data.targetId == request.auth.uid
+      );
+    }
+
+    // 参考数据
+    match /locations/{locationId} { allow read: if true; }
+    match /categories/{categoryId} { allow read: if true; }
+  }
+}
